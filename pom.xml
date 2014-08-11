@@ -4,8 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.springframework</groupId>
-    <artifactId>gs-rest-service</artifactId>
-    <version>0.1.0</version>
+    <version>0.1</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -14,6 +13,27 @@
     </parent>
 
     <dependencies>
+    	<dependency>
+	         <groupId>org.apache</groupId>
+	         <artifactId>org.apache</artifactId>
+	         <scope>system</scope>
+	         <version>1.0</version>
+	         <systemPath>${basedir}/libs/xmlrpc.jar</systemPath>
+      	</dependency>
+      	<dependency>
+	         <groupId>apache.math</groupId>
+	         <artifactId>apache.math</artifactId>
+	         <scope>system</scope>
+	         <version>3.3</version>
+	         <systemPath>${basedir}/libs/commons-math.jar</systemPath>
+      	</dependency>
+      	<dependency>
+	         <groupId>voi.vowrite</groupId>
+	         <artifactId>voi.vowrite</artifactId>
+	         <scope>system</scope>
+	         <version>1.1</version>
+	         <systemPath>${basedir}/libs/voi.vowrite.jar</systemPath>
+      	</dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -21,19 +41,15 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-        </dependency>
+        </dependency>        
     </dependencies>
-
+	
     <properties>
         <start-class>hello.Application</start-class>
     </properties>
 
     <build>
         <plugins>
-            <plugin> 
-                <artifactId>maven-compiler-plugin</artifactId> 
-                <version>2.3.2</version> 
-            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -55,4 +71,6 @@
             <snapshots><enabled>true</enabled></snapshots>
         </pluginRepository>
     </pluginRepositories>
+    <packaging>war</packaging>
+    <artifactId>bfs</artifactId>
 </project>
