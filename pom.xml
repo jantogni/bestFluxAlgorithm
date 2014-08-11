@@ -14,6 +14,11 @@
 
     <dependencies>
     	<dependency>
+    		<groupId>javax.annotation</groupId>
+    		<artifactId>javax.annotation-api</artifactId>
+    		<version>1.2</version>
+    	</dependency>
+    	<dependency>
 	         <groupId>org.apache</groupId>
 	         <artifactId>org.apache</artifactId>
 	         <scope>system</scope>
@@ -45,7 +50,7 @@
     </dependencies>
 	
     <properties>
-        <start-class>hello.Application</start-class>
+        <start-class>ssap.Application</start-class>
     </properties>
 
     <build>
@@ -63,7 +68,13 @@
             <url>http://repo.spring.io/libs-snapshot</url>
             <snapshots><enabled>true</enabled></snapshots>
         </repository>
+        <repository>
+		    <id>spring-repo</id>
+		    <name>Spring Repository</name>
+		    <url>http://repo.spring.io/release</url>
+		</repository>
     </repositories>
+    
     <pluginRepositories>
         <pluginRepository>
             <id>spring-snapshots</id>
@@ -71,6 +82,8 @@
             <snapshots><enabled>true</enabled></snapshots>
         </pluginRepository>
     </pluginRepositories>
+    
     <packaging>war</packaging>
+    
     <artifactId>bfs</artifactId>
 </project>
