@@ -195,7 +195,7 @@ public class SsapController {
 	}
 	
 	public String generateVotable(String [] firstRow, String [] secondRow, String [] thirdRow){
-		String randomString = "votable.xml";
+		String randomString = "/var/tmp/votable.xml";
 		
         FileOutputStream oStream = null ;
         try{
@@ -649,7 +649,7 @@ public class SsapController {
     	
     	generateVotable(firstRow, secondRow, thirdRow);
     	
-		return "votable.xml";
+		return "/var/tmp/votable.xml";
 	}
 	
 	 
