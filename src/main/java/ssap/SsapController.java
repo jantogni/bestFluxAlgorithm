@@ -24,6 +24,8 @@ import javax.servlet.http.HttpServletResponse;
 
 
 
+
+
 //org.springFramework
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -44,6 +46,9 @@ import org.apache.xmlrpc.XmlRpcClient;
 
 
 
+
+
+import java.text.DateFormat;
 //java.text
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -52,6 +57,8 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.Vector;
 import java.util.Date;
+
+
 
 
 
@@ -77,6 +84,7 @@ public class SsapController {
 		}
 		catch(Exception e){
 			System.out.println("Problems: XMLRPCclient");
+			e.printStackTrace();
 		}
 		
 		return null;
@@ -124,6 +132,7 @@ public class SsapController {
 			cast.put("date_observed", date_db);
 			cast.put("date.getTime", date_db.getTime());
 		}catch(ParseException e){
+			System.out.println("Error trying to cast date");
 			e.printStackTrace();
 		}		
 		return cast;
@@ -197,7 +206,7 @@ public class SsapController {
     	}
     	catch(Exception e){
     		System.out.println("Problems: XmlRpcQuery");
-    		System.out.println(e);
+    		e.printStackTrace();
     	}
     	
     	
@@ -353,7 +362,6 @@ public class SsapController {
 
         // Create a new Table element
         VOTableTable voTab = new VOTableTable() ;
-        //voTab.setName("Best Flux estimation") ;
 
         // Add fields in the table.
         VOTableField voField1 = new VOTableField();
@@ -366,6 +374,7 @@ public class SsapController {
         voField2.setName("Frequency");
         voField2.setDataType("double");
         voField2.setWidth("10");
+        voField2.setUnit("Hz");
         voTab.addField(voField2);            
         
         VOTableField voField3 = new VOTableField();
@@ -378,42 +387,49 @@ public class SsapController {
         voField4.setName("FluxDensity");
         voField4.setDataType("double");
         voField4.setWidth("10");
+        voField4.setUnit("Jansky");
         voTab.addField(voField4);
         
         VOTableField voField5 = new VOTableField();
         voField5.setName("FluxDensityError");
         voField5.setDataType("double");	    
         voField5.setWidth("10");
+        voField5.setUnit("Jansky");
         voTab.addField(voField5);
         
         VOTableField voField6 = new VOTableField();
         voField6.setName("SpectralIndex");
         voField6.setDataType("double");
         voField6.setWidth("10");
+        voField6.setUnit("Unitless");
         voTab.addField(voField6);
         
         VOTableField voField7 = new VOTableField();
         voField7.setName("SpectralIndexError");
         voField7.setDataType("double");
         voField7.setWidth("10");
+        voField7.setUnit("Unitless");
         voTab.addField(voField7);
         
         VOTableField voField8 = new VOTableField();
         voField8.setName("error2");
         voField8.setDataType("double");
         voField8.setWidth("10");
+        voField8.setUnit("Jansky");
         voTab.addField(voField8);
         
         VOTableField voField9 = new VOTableField();
         voField9.setName("error3");
         voField9.setDataType("double");
         voField9.setWidth("10");
+        voField9.setUnit("Jansky");
         voTab.addField(voField9);
         
         VOTableField voField10 = new VOTableField();
         voField10.setName("error4");
         voField10.setDataType("double");
         voField10.setWidth("10");
+        voField10.setUnit("Jansky");
         voTab.addField(voField10);
         
         VOTableField voField11 = new VOTableField();
@@ -456,17 +472,20 @@ public class SsapController {
 	
 	public double derivate_a(double a, double b, double alpha, double t_0, double f_0, double t, double f){
 		//dflux/da = (t-t0)(f_0/f)^alpha
-		return (t-t_0)*Math.pow((f_0/f), alpha);
+		//return (t-t_0)*Math.pow((f_0/f), alpha);
+		return (t-t_0)*Math.pow((f/f_0), alpha);
 	} 
 	
 	public double derivate_b(double a, double b, double alpha, double t_0, double f_0, double t, double f){
 		//dflux/db = (f_0/f)^alpha
-		return Math.pow((f_0/f), alpha);
+		//return Math.pow((f_0/f), alpha);
+		return Math.pow((f/f_0), alpha);
 	}
 	
 	public double derivate_alpha(double a, double b, double alpha, double t_0, double f_0, double t, double f){
 		//dflux/dalpha = (a(t-t_0)+b)(f_0/f)^alpha * ln(f_0/f))
-		return (a*(t-t_0)+b)*Math.pow((f_0/f), alpha) * Math.log(f_0/f);
+		//return (a*(t-t_0)+b)*Math.pow((f_0/f), alpha) * Math.log(f_0/f);
+		return (a*(t-t_0)+b)*Math.pow((f/f_0), alpha) * Math.log(f/f_0);
 	}
 		
 	public double[][] jacobian(double beta[], double f[], double t[], double f_0, double t_0){
@@ -488,7 +507,8 @@ public class SsapController {
 		
 		//Evaluate F(beta, t_0, f_0)
 		for(int i = 0; i < t.length; i++){
-			ev[i] = (beta[0]*(t[i] - t_0) + beta[1])*Math.pow((f_0/f[i]), beta[2]);
+			//current ev[i] = (beta[0]*(t[i] - t_0) + beta[1])*Math.pow((f_0/f[i]), beta[2]);
+			ev[i] = (beta[0]*(t[i] - t_0) + beta[1])*Math.pow((f[i]/f_0), beta[2]);			
 		}
 			
 		return ev;
@@ -568,9 +588,8 @@ public class SsapController {
 		for(int i = 0; i < jt_w_j.getRowDimension(); i++){
 			for(int j = 0; j < jt_w_j.getColumnDimension(); j++){
 				try{
-					if(i == j){						
-						diagjt_w_j.setEntry(i, j, lambda * jt_w_j.getEntry(i, j));
-					}
+					if(i == j)
+						diagjt_w_j.setEntry(i, j, lambda * jt_w_j.getEntry(i, j));					
 					else
 						diagjt_w_j.setEntry(i,j, 0);
 				}
@@ -578,7 +597,7 @@ public class SsapController {
 					System.out.println("Null problems");
 				}
 			}
-		}			
+		}
 		
 		RealMatrix inverse_diag = MatrixUtils.inverse(diagjt_w_j);
 		
@@ -607,21 +626,23 @@ public class SsapController {
 		//Model Goodness
 		double average = 0;
 		int total = yRV.getDimension();
-		for(int i = 0; i < yRV.getDimension(); i++){
-			average += Math.abs(yRV.getEntry(i) - f_bRV.getEntry(i))/total;
-		}		
-		average = average / Math.sqrt(total);
+		
+		//sigma_i = sqrt( (Model - Data)^2 + sigma_individual^2)
+		//average = sum(sigma_i)
+		for(int i = 0; i < total; i++)
+			average += Math.sqrt(Math.pow((f_bRV.getEntry(i) - yRV.getEntry(i)),2) + Math.pow(flux_uncertain[i],2));
+		
+		//X^2 = average / (N^1.5)
+		average = average / (total * Math.sqrt(total));
 		
 		//Error Eq3
 		double error3 = 0;
-		int N = sigma_y.getColumnDimension();
-		
-		for(int i = 0; i < N; i++){
-			error3 += sigma_y.getEntry(i, i)*sigma_y.getEntry(i, i);
-		}
-		
+		int N = sigma_y.getColumnDimension();		
+		for(int i = 0; i < N; i++)
+			error3 += sigma_y.getEntry(i, i)*sigma_y.getEntry(i, i);		
 		error3 = error3/N;
 		error3 = Math.sqrt(error3) / Math.sqrt(N);
+		
 		//values = {a, b, c, goodness, sigma_a, sigma_b, sigma_alpha, error3}
 		double[] values = {solution.toArray()[0], solution.toArray()[1], solution.toArray()[2], Math.abs(average), sigma_p.getEntry(0, 0), sigma_p.getEntry(1, 1), sigma_p.getEntry(2, 2), error3};
 		
@@ -630,7 +651,7 @@ public class SsapController {
 	}	
 		
 	public double[] levenbergMarquardt(double flux[], double flux_uncertain[], double f[], double t[], double f_0, double t_0, boolean weighted){
-		int N = 25;
+		int N = 100;
 		
 		double beta[] = {0.1, 1, -0.7, 0, 0, 0, 0, 0};
 		double delta[] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -789,10 +810,6 @@ public class SsapController {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public String[] timeWindows4months(Vector tw4m, Date date_query, Double frequency, String name, boolean weighted){
-		double flux[] = new double[tw4m.size()];
-		double flux_uncertain[] = new double[tw4m.size()];
-		double f[] = new double[tw4m.size()];
-		double t[] = new double[tw4m.size()];
 		final long MILISECS_PER_DAY = 24 * 60 * 60 * 1000;
 		
 		//Sorting measurements
@@ -825,24 +842,41 @@ public class SsapController {
 		}
 		
 		//Create tw4m_sorted vector
-		for(int i = 0; i < tw4m.size(); i++){
+		for(int i = 0; i < tw4m_sorted.size(); i++){
 			Hashtable element = (Hashtable)tw4m.get(index[i]);
 			tw4m_sorted.set(i, element);
-		}		
+		}
 		//End sorting measurements
 		
-		//Adjustable time frame: Best goodness
+		System.out.println("----------------------------------------------------------");
+		System.out.println("Parameters");
+		System.out.println("Frequency: " + frequency + " Date: " + date_query);
+    	System.out.println("# of elements in 4 months: " + tw4m_sorted.size());
+    	System.out.println("List of measurement (sorted)\n");
+    	for(int i = 0; i < tw4m_sorted.size(); i++){    		
+    		Hashtable element = (Hashtable)tw4m_sorted.get(i);
+    		System.out.print("\tMeasurment: " + (i+1));
+    		Date d = new Date((Long)element.get("date.getTime"));
+    		DateFormat df = new SimpleDateFormat("dd MMM yyyy");    		
+    		System.out.println("\tFrequency: " + element.get("frequency") + "\tDate: "+ df.format(d) + "\tFlux: " + element.get("flux").toString() );
+    	}
+    	System.out.println("");
+		
+		//Adjustable time frame: Best model goodness
 		double[] bestEstimatedFlux = new double[7];
 		int totalMs = 0;
 		double error2 = 0;
 		double error_montecarlo = 100;
 		
-		for(int i = 7; i < tw4m.size(); i++){
-			System.out.println("\tParsing sorted data");
+		//Iteration using 3 or more, to find the best estimation
+		for(int i = 3; i < tw4m_sorted.size(); i++){			
 			double flux_frame[] = new double[i];
 			double flux_uncertain_frame[] = new double[i];
 			double f_frame[] = new double[i];
 			double t_frame[] = new double[i];
+			
+			error2 = 0;
+			error_montecarlo = 100;
 			
 			for(int j = 0; j < i; j++){
 				Hashtable twEl = (Hashtable)tw4m_sorted.get(j);
@@ -859,36 +893,31 @@ public class SsapController {
 				t_frame[j] = t_frame[j] / (MILISECS_PER_DAY);
 			}
 			
-			System.out.println("\tUsing " + i + " measurements");
+			System.out.println("\tUsing first " + i + " measurements");
 			double[] estimatedFlux = levenbergMarquardt(flux_frame, flux_uncertain_frame, f_frame, t_frame, frequency, date_query.getTime(), weighted);
-			System.out.println("\tA: " + estimatedFlux[0]);
-			System.out.println("\tB: " + estimatedFlux[1]);
-			System.out.println("\tAlpha: " + estimatedFlux[2]);
-			System.out.println("\tModel Goodness: " + estimatedFlux[3]);
-			System.out.println("\tSigma A: " + estimatedFlux[4]);
-			System.out.println("\tSigma B: " + estimatedFlux[5]);
-			System.out.println("\tSigma Alpha: " + estimatedFlux[6]);
-			System.out.println("");
-			System.out.println("");
 			
-			if(i > 7){
+			double error_montecarlo_verbose = 100;
+			try{
+				error_montecarlo_verbose = monteCarloError(flux_frame, flux_uncertain_frame, f_frame, t_frame, frequency, date_query.getTime());
+			}
+			catch(Exception e){
+				System.out.println("Problems calculating montecarlo error");
+				e.printStackTrace();
+				error_montecarlo_verbose = 100;
+			}
+										
+			if(i > 3){
 				if(estimatedFlux[3] < bestEstimatedFlux[3]){
-					try{
-						error_montecarlo = monteCarloError(flux, flux_uncertain, f, t, frequency, date_query.getTime());
-					}
-					catch(Exception e){						
-					}
-					
-					bestEstimatedFlux = estimatedFlux;
-					totalMs = i;
-					bestEstimatedFlux[2] = -bestEstimatedFlux[2];
-					
+					error_montecarlo = error_montecarlo_verbose;
 					
 					for(double f_error : flux_uncertain_frame){
 						error2 +=  f_error*f_error;
 					}
 					error2 = error2/flux_uncertain_frame.length;
-					error2 = Math.sqrt(error2) / Math.sqrt(flux_uncertain_frame.length);					
+					error2 = Math.sqrt(error2) / Math.sqrt(flux_uncertain_frame.length);
+					
+					bestEstimatedFlux = estimatedFlux;
+					totalMs = i;												
 				}
 			}
 			else{
@@ -896,6 +925,27 @@ public class SsapController {
 				bestEstimatedFlux = estimatedFlux;
 				totalMs = i;
 			}
+			
+			double error2_verbose = 0;
+			
+			for(double f_error : flux_uncertain_frame){
+				error2_verbose +=  f_error*f_error;
+			}
+			error2_verbose = error2_verbose/flux_uncertain_frame.length;
+			error2_verbose = Math.sqrt(error2_verbose) / Math.sqrt(flux_uncertain_frame.length);
+			
+			System.out.println("\tA: " + estimatedFlux[0]);
+			System.out.println("\tB: " + estimatedFlux[1]);
+			System.out.println("\tAlpha: " + estimatedFlux[2]);
+			System.out.println("\tModel Goodness: " + estimatedFlux[3]);
+			System.out.println("\tSigma A: " + estimatedFlux[4]);
+			System.out.println("\tSigma B: " + estimatedFlux[5]);
+			System.out.println("\tSigma Alpha: " + estimatedFlux[6]);
+			System.out.println("\tError2: "+ error2_verbose);
+			System.out.println("\tError3: " + estimatedFlux[7]);
+			System.out.println("\tError Montecarlo: " + error_montecarlo_verbose);
+			System.out.println("");
+			System.out.println("");			
 		}
 		
 		System.out.println("Best goodness at: " + totalMs);		
@@ -903,7 +953,7 @@ public class SsapController {
 		double[] estimatedFlux = bestEstimatedFlux;
 		
 		try{
-			//row = {name, freq, date, flux, sigma_flux, alpha, sigma_alpha, error2, error3, warning, notms, verbose}
+			//row = {name, freq, date, flux, sigma_flux, alpha, sigma_alpha, error2, error3, error_montecarlo, warning, notms, verbose}
 			String [] row = {name, frequency.toString(), date_query.toString(), String.valueOf(estimatedFlux[1]), String.valueOf(estimatedFlux[5]), 
 					String.valueOf(estimatedFlux[2]), String.valueOf(estimatedFlux[6]), String.valueOf(error2), String.valueOf(estimatedFlux[7]), 
 					String.valueOf(error_montecarlo), "-1", "-1", "empty"};
@@ -911,8 +961,9 @@ public class SsapController {
 		}
 		catch(Exception e){
 			System.out.println("Problems: Time windows 4 months - VOTable");
-			System.out.println(e);
-			return null;
+			e.printStackTrace();
+			String[] to_return = {"null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "empty"};
+			return to_return;
 		}			    					
 	}
 
@@ -1091,7 +1142,7 @@ public class SsapController {
     	}
     	catch(Exception e){
     		System.out.println("Problems: Time windows 4 months");
-    		System.out.println(e);
+    		e.printStackTrace();
     	}
         
     	try{
@@ -1172,120 +1223,125 @@ public class SsapController {
 					}
 			}
     	}
+		    	
+    	//String[] output = {"source", "frequency", "date", "flux_estimation", "flux_error", "alpha", "alpha error", "Error eq2", "Error eq3", "Error 4", "warning", "not_measurements", "verbose"};
+    	//String[] output = new String[13];//{"null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "empty"};
+    	String[] output = {"null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "empty"};
+    	    	
+    	//********************************************************************************************
+    	//Warning construction
+    	//********************************************************************************************
+    	char[] warning = {'4','4','4'};
     	
-    	System.out.println("----------------------------------------------------------");
-    	System.out.println("Elements in 4 months time window: " + tw4m.size());
+    	//Str[0]: amount of measurements
+    	if(tw4m.size() >= 3) warning[0] = '3';
+    	if(tw4m.size() == 2) warning[0] = '2';
+    	if(tw4m.size() == 1) warning[0] = '1';
+    	if(tw4m.size() == 0) warning[0] = '0';
     	
-    	//String[] output = {"source", "frequency", "date", "flux_estimation", "flux_error", "alpha", "alpha error", "Error eq2", "Error eq3", "Error 4", "unkown_source", "not_measurements", "verbose"};
-    	String[] output = new String[13];//{"null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "empty"};
-          		       	        	
-    	//Time Windows +-2 months
+    	//Str[1]: at least 1 element within 10 days in the same band
+    	warning[1] = '0';
+    	final long MILISECS_PER_DAY = 24 * 60 * 60 * 1000;
+    	long upper_5days = date_query.getTime() + 5*MILISECS_PER_DAY;
+		long lower_5days = date_query.getTime() - 5*MILISECS_PER_DAY;
+		
+    	for(int i = 0; i<tw4m.size(); i++){
+			Hashtable ms = convertToHashtable(tw4m.get(i));
+			
+			if(((Long)ms.get("date.getTime") < upper_5days) && ((Long)ms.get("date.getTime") > lower_5days))
+				if(almaBand((Double)ms.get("frequency")) == almaBand(frequency)){
+					warning[1] = '1';
+					break;
+				}
+    	}
+    	
+    	//Str[2]: At least 1 ms before and 1 ms after
+    	boolean ms_before = false;
+		boolean ms_after = false;
+			    			
+		for(int i = 0; i < tw4m.size(); i++){
+			Hashtable measurement = convertToHashtable(tw4m.get(i));
+			if((Long)measurement.get("date.getTime") < date_query.getTime())
+				ms_before = true;
+			if((Long)measurement.get("date.getTime") > date_query.getTime())
+				ms_after = true;
+		}	    				    				    			
+		
+		if(ms_before && ms_after){
+			warning[2] = '1';
+			
+			System.out.println("Before and after OK");			
+		}
+		else{
+			warning[2] = '0';
+			
+			System.out.println("Before and after NOT OK");			
+		}			
+		
+    	//********************************************************************************************
+    	//END Warning construction
+    	//********************************************************************************************
+    					
+
+		//********************************************************************************************
+    	//Estimation using all alternatives
+    	//********************************************************************************************
+
     	try{
-    		System.out.println("----------------------------------------------------------");
-    		int not_ms = 10;
-    		
+    		System.out.println("----------------------------------------------------------");    	
+    		    		
 	    	if(tw4m.size() >= 3){
-	    		//Weighted fit
-	    		output = timeWindows4months(tw4m, date_query, frequency, name, true);
-	    		//Warning
-	    		char[] warning = {'4','4','4'};
+	    		output[11] = "1";
+	    		System.out.println("Using timeWindows4months, Exactly: " + tw4m.size() + " measurements");	    		
 	    		
-	    		if(tw4m.size() > 0){	    			
-	    			//Before && After
-	    			boolean before = false;
-	    			boolean after = false;
-	    				    			
-	    			for(int i = 0; i < tw4m.size(); i++){
-	    				Hashtable measurement = convertToHashtable(tw4m.get(i));
-	    				if((Long)measurement.get("date.getTime") < date_query.getTime())
-	    					before = true;
-	    				if((Long)measurement.get("date.getTime") > date_query.getTime())
-	    					after = true;
-	    			}	    				    				    			
-	    			
-	    			if(before && after){
-	    				System.out.println("Before and after OK");
-	    				warning[2] = '1';
-	    			}
-	    			else{
-	    				System.out.println("Before and after NOT OK");
-	    				warning[2] = '0';
-	    			}
-	    			//end Before && After
-	    			
-	    			//# of measurements
-	    			if(tw4m.size() >= 3){
-	    				warning[0] = '1';
-	    			}
-	    			else{
-	    				//#2 measurement
-	    				if(tw4m.size() == 2){
-	    					Hashtable ms1 = (Hashtable)tw4m.get(0);
-	    					Hashtable ms2 = (Hashtable)tw4m.get(0);
-	    					
-	    					double freq1 = (Double)ms1.get("frequency");
-	    					double freq2 = (Double)ms2.get("frequency");
-	    					
-	    					double flux1 = (Double)ms1.get("flux");
-	    					double flux2 = (Double)ms2.get("flux");
-	    					
-	    					warning[0] = '2'; 
-	    					double flux2ms =  flux1 * Math.pow((frequency/freq2), (Math.log10(flux2/flux1)/Math.log10(freq2/freq1)));
-	    					
-	    					System.out.println("Flux estimated with 2 measurements" + flux2ms);
-	    					output[3] = String.valueOf(flux2ms);
-	    				}
-	    				else{
-	    					//#1 measurement
-	    					warning[0] = '3';
-	    					
-	    					final long MILISECS_PER_DAY = 24 * 60 * 60 * 1000;
-	    		    		
-	    		    		//10 days time windows
-	    					long upper_5days = date_query.getTime() + 5*MILISECS_PER_DAY;
-	    					long lower_5days = date_query.getTime() - 5*MILISECS_PER_DAY;	
-	    					Hashtable measurement = convertToHashtable(tw4m.get(0));
-	    					
-	    					if(((Long)measurement.get("date.getTime") < upper_5days)&&((Long)measurement.get("date.getTime") > lower_5days))
-	    						if(almaBand((Double)measurement.get("frequency")) == almaBand(frequency)){
-	    							warning[1] = '1'; //close and in the same band
-	    							double estimatedFlux = (Double)measurement.get("flux") * Math.pow(((Double)measurement.get("frequency")/frequency),-0.7);
-	    							output[3] = String.valueOf(estimatedFlux);
-	    						}
-	    						else
-	    							warning[1] = '0'; //close but in different band
-	    					else
-	    						warning[1] = '2'; //Not close
-	    				}
-	    			}	    			
-	    			//end # of measurements
-	    			
-	    			System.out.println("Warning: " + String.valueOf(warning));
-	    			
-	    			output[not_ms] = String.valueOf(warning);
-	    		}
-	    		else{
-	    			output[not_ms] = "2";
-	    		}
+	    		//Weighted fit
+	    		output = timeWindows4months(tw4m, date_query, frequency, name, true);	 	    			    	
 	    	}
-	    	else{	    	
-    			System.out.println("Not enough measurements");
-    			output[not_ms] = "0";
+	    	else if (tw4m.size() == 2){	    		
+	    		output[11] = "1";
+	    		
+	    		System.out.println("Only 2 measurements");
+	    		
+	    		Hashtable ms1 = (Hashtable)tw4m.get(0);
+				Hashtable ms2 = (Hashtable)tw4m.get(1);
+				
+				double freq1 = (Double)ms1.get("frequency");
+				double freq2 = (Double)ms2.get("frequency");
+				
+				double flux1 = (Double)ms1.get("flux");
+				double flux2 = (Double)ms2.get("flux");
+				
+				double flux2ms =  flux1 * Math.pow((frequency/freq2), (Math.log10(flux2/flux1)/Math.log10(freq2/freq1)));
+				
+				System.out.println("Flux estimated with 2 measurements" + flux2ms);
+				output[3] = String.valueOf(flux2ms);
+	    	}
+	    	else if (tw4m.size() == 1){
+	    		output[11] = "1";
+	    		
+	    		System.out.println("Only 1 measurements");
+	    		
+				Hashtable measurement = convertToHashtable(tw4m.get(0));											
+				double estimatedFlux = (Double)measurement.get("flux") * Math.pow(((Double)measurement.get("frequency")/frequency),-0.7);
+				output[3] = String.valueOf(estimatedFlux);
+	    	}
+	    	else{	    	    	
+	    		output[11] = "0";
+	    		
+    			System.out.println("0 measurements");    			
     		}
     	}
     	catch(Exception e){
-    		System.out.println("Problems: in the estimation");
+    		System.out.println("Problems estimating flux. Printing traceback");
     		e.printStackTrace();
     	}
     	
-	    	
-	    int not_src = 11;
-    	if(smV.size() == 0)
-    		output[not_src] = "0";    	
-    	else
-    		output[not_src] = "1";
-    	    
-    	return output;
+    	output[10] = String.valueOf(warning);
+    	//********************************************************************************************
+    	//END Estimation using all alternatives
+    	//********************************************************************************************    	
+    	
+    	return output;    		    		    		   
 	}
 	 
 		
@@ -1365,6 +1421,7 @@ public class SsapController {
     		return xmlBytes;
     		
     	}catch (Exception e){
+    		System.out.println("Error main loop");
     		e.printStackTrace();
     	}
     	
