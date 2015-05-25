@@ -16,16 +16,6 @@ import org.apache.commons.math3.linear.*;
 import javax.servlet.http.HttpServletResponse;
 
 
-
-
-
-
-
-
-
-
-
-
 //org.springFramework
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -37,17 +27,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 //org.apache
 import org.apache.xmlrpc.XmlRpcClient;
 
-
-
-
-
-
-
-
-
-
-
-
 import java.text.DateFormat;
 //java.text
 import java.text.ParseException;
@@ -57,16 +36,6 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.Vector;
 import java.util.Date;
-
-
-
-
-
-
-
-
-
-
 
 
 //voi.vowrite
@@ -211,23 +180,6 @@ public class SsapController {
     	
     	
         return (Vector)searchMeasurement;
-	}
-		
-	public String generateRandomString(int length){
-
-		StringBuffer buffer = new StringBuffer();
-		String characters = "";
-
-		characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";	
-		
-		int charactersLength = characters.length();
-
-		for (int i = 0; i < length; i++) {
-			double index = Math.random() * charactersLength;
-			buffer.append(characters.charAt((int) index));
-		}
-		
-		return buffer.toString()+".xml";
 	}
 	
 	public String generateVotable3rows(String [] firstRow, String [] secondRow, String [] thirdRow){
@@ -472,27 +424,23 @@ public class SsapController {
 	
 	public double derivate_a(double a, double b, double alpha, double t_0, double f_0, double t, double f){
 		//dflux/da = (t-t0)(f_0/f)^alpha
-		//return (t-t_0)*Math.pow((f_0/f), alpha);
 		return (t-t_0)*Math.pow((f/f_0), alpha);
 	} 
 	
 	public double derivate_b(double a, double b, double alpha, double t_0, double f_0, double t, double f){
 		//dflux/db = (f_0/f)^alpha
-		//return Math.pow((f_0/f), alpha);
 		return Math.pow((f/f_0), alpha);
 	}
 	
 	public double derivate_alpha(double a, double b, double alpha, double t_0, double f_0, double t, double f){
 		//dflux/dalpha = (a(t-t_0)+b)(f_0/f)^alpha * ln(f_0/f))
-		//return (a*(t-t_0)+b)*Math.pow((f_0/f), alpha) * Math.log(f_0/f);
 		return (a*(t-t_0)+b)*Math.pow((f/f_0), alpha) * Math.log(f/f_0);
 	}
 		
 	public double[][] jacobian(double beta[], double f[], double t[], double f_0, double t_0){
 		double [][] jacobian = new double[t.length][3];
 		
-		//Jacobian Matrix with dimensions Nx3 (N: number of measurements)
-		
+		//Jacobian Matrix with dimensions Nx3 (N: number of measurements)		
 		for(int i = 0; i < t.length; i++){
 			jacobian[i][0] = derivate_a(beta[0], beta[1], beta[2], t_0, f_0, t[i], f[i]);
 			jacobian[i][1] = derivate_b(beta[0], beta[1], beta[2], t_0, f_0, t[i], f[i]);
@@ -507,7 +455,6 @@ public class SsapController {
 		
 		//Evaluate F(beta, t_0, f_0)
 		for(int i = 0; i < t.length; i++){
-			//current ev[i] = (beta[0]*(t[i] - t_0) + beta[1])*Math.pow((f_0/f[i]), beta[2]);
 			ev[i] = (beta[0]*(t[i] - t_0) + beta[1])*Math.pow((f[i]/f_0), beta[2]);			
 		}
 			
@@ -564,7 +511,7 @@ public class SsapController {
 		return values;
 	}
 
-	public double[] WeightedlevenbergMarquardtIterator(double beta[], double flux[], double flux_uncertain[], double f[], double t[], double lambda, double f_0, double t_0){
+	public double[] WeightedlevenbergMarquardtIterator(double beta[], double flux[], double flux_uncertain[], double f[], double t[], double lambda, double f_0, double t_0, int model){
 		//(J^t W J + lambda diag(J^t W J)) delta = J^t W (Y - f(b))			
 		//delta = (J^t W J + lambda diag(J^t W J))^-1 J^t W (Y - f(b))
 		
@@ -578,11 +525,15 @@ public class SsapController {
 			}		
 		
 		double[][] jacobian = jacobian(beta, f, t, f_0, t_0);				
-		
+			
 		RealMatrix jacobianAsRM = MatrixUtils.createRealMatrix(jacobian);
-		RealMatrix jacobianAsRM_t = jacobianAsRM.transpose();
-		RealMatrix jt_w_j = jacobianAsRM_t.multiply(Wrm.multiply(jacobianAsRM));
 		
+		//System.out.print(jacobianAsRM.getEntry(0, 0) + " "); System.out.print(jacobianAsRM.getEntry(0, 1) + " "); System.out.println(jacobianAsRM.getEntry(0, 2));		
+		//System.out.print(jacobianAsRM.getEntry(1, 0) + " "); System.out.print(jacobianAsRM.getEntry(1, 1) + " "); System.out.println(jacobianAsRM.getEntry(1, 2));
+		//System.out.print(jacobianAsRM.getEntry(2, 0) + " "); System.out.print(jacobianAsRM.getEntry(2, 1) + " "); System.out.println(jacobianAsRM.getEntry(2, 2));		
+		
+		RealMatrix jacobianAsRM_t = jacobianAsRM.transpose();
+		RealMatrix jt_w_j = jacobianAsRM_t.multiply(Wrm.multiply(jacobianAsRM));		
 		RealMatrix diagjt_w_j = MatrixUtils.createRealMatrix(jt_w_j.getRowDimension(), jt_w_j.getColumnDimension());
 		
 		for(int i = 0; i < jt_w_j.getRowDimension(); i++){
@@ -594,22 +545,53 @@ public class SsapController {
 						diagjt_w_j.setEntry(i,j, 0);
 				}
 				catch(Exception e){
-					System.out.println("Null problems");
+					System.out.println("Problems diagjt_w_j matrix");
+					e.printStackTrace();
 				}
 			}
 		}
 		
-		RealMatrix inverse_diag = MatrixUtils.inverse(diagjt_w_j);
+		/*
+		System.out.print(diagjt_w_j.getEntry(0, 0) + " "); System.out.print(diagjt_w_j.getEntry(0, 1) + " "); System.out.println(diagjt_w_j.getEntry(0, 2));		
+		System.out.print(diagjt_w_j.getEntry(1, 0) + " "); System.out.print(diagjt_w_j.getEntry(1, 1) + " "); System.out.println(diagjt_w_j.getEntry(1, 2));
+		System.out.print(diagjt_w_j.getEntry(2, 0) + " "); System.out.print(diagjt_w_j.getEntry(2, 1) + " "); System.out.println(diagjt_w_j.getEntry(2, 2));
+		*/
 		
-		RealMatrix sigma_p = inverse_diag;
-		sigma_p.setEntry(0, 0, Math.sqrt(sigma_p.getEntry(0, 0)));
-		sigma_p.setEntry(1, 1, Math.sqrt(sigma_p.getEntry(1, 1)));
-		sigma_p.setEntry(2, 2, Math.sqrt(sigma_p.getEntry(2, 2)));
 		
-		RealMatrix sigma_y = jacobianAsRM.multiply(inverse_diag.multiply(jacobianAsRM_t));
-		for(int i = 0; i < sigma_y.getRowDimension(); i++){
-			for(int j = 0; j < sigma_y.getColumnDimension(); j++)
-				sigma_y.setEntry(i, j, Math.sqrt(sigma_y.getEntry(i, j)));
+		RealMatrix inverse_diag = MatrixUtils.createRealMatrix(jt_w_j.getRowDimension(), jt_w_j.getColumnDimension());
+		RealMatrix sigma_p = MatrixUtils.createRealMatrix(jt_w_j.getRowDimension(), jt_w_j.getColumnDimension());
+		RealMatrix sigma_y = MatrixUtils.createRealMatrix(jt_w_j.getRowDimension(), jt_w_j.getColumnDimension());
+		
+		try{
+			inverse_diag = MatrixUtils.inverse(diagjt_w_j);		
+			sigma_p = inverse_diag;
+			
+			sigma_p.setEntry(0, 0, Math.sqrt(sigma_p.getEntry(0, 0)));
+			sigma_p.setEntry(1, 1, Math.sqrt(sigma_p.getEntry(1, 1)));
+			sigma_p.setEntry(2, 2, Math.sqrt(sigma_p.getEntry(2, 2)));
+			
+			sigma_y = jacobianAsRM.multiply(inverse_diag.multiply(jacobianAsRM_t));
+			for(int i = 0; i < sigma_y.getRowDimension(); i++){
+				for(int j = 0; j < sigma_y.getColumnDimension(); j++)
+					try{
+						if(i == j)
+							sigma_y.setEntry(i, j, Math.sqrt(sigma_y.getEntry(i, j)));
+						else
+							sigma_y.setEntry(i, j, 0);
+					}
+					catch(Exception e){
+						//System.out.println("Problems sigma_y matrix");
+						e.printStackTrace();
+					}				
+			}
+		}
+		catch(Exception e){
+			//System.out.println("Problem sigma_y matrix inverse");
+			//System.out.println("Defining covariance as large number");
+			for(int i = 0; i < sigma_y.getRowDimension(); i++){
+		 		for(int j = 0; j < sigma_y.getColumnDimension(); j++)
+					sigma_y.setEntry(i, j, 10000);							
+			}
 		}
 		
 		RealMatrix left = jt_w_j.add(diagjt_w_j);
@@ -617,24 +599,40 @@ public class SsapController {
 		
 		RealVector yRV = new ArrayRealVector(flux, false);
 		RealVector f_bRV = new ArrayRealVector(f_b, false);						
-		
+				
 		//Solving left * delta = constants
-		DecompositionSolver solver = new LUDecomposition(left).getSolver();
-		RealVector constants = jacobianAsRM_t.multiply(Wrm).operate(yRV.subtract(f_bRV));
-		RealVector solution = solver.solve(constants);
+		RealVector solution;
+		try{
+			DecompositionSolver solver = new LUDecomposition(left).getSolver();
+			RealVector constants = jacobianAsRM_t.multiply(Wrm).operate(yRV.subtract(f_bRV));
+			solution = solver.solve(constants);
+		}
+		catch(Exception e){
+			//System.out.println("Problem solver");
+			double[] sol_d = {100,100,100};
+			solution = MatrixUtils.createRealVector(sol_d);
+		}
 		
 		//Model Goodness
-		double average = 0;
-		int total = yRV.getDimension();
+		double m_goodness = 0;
+ 		int total = yRV.getDimension();
+ 		
+		if(model == 0){		
+	 		for(int i = 0; i < yRV.getDimension(); i++){
+	 			m_goodness += Math.abs(yRV.getEntry(i) - f_bRV.getEntry(i))/total;
+	 		}		
+	 		m_goodness = m_goodness / Math.sqrt(total);
+		}
+		else if(model == 1){
+			//sigma_i = sqrt( (Model - Data)^2 + sigma_individual^2)
+			//average = sum(sigma_i)
+			for(int i = 0; i < total; i++)
+				m_goodness += Math.sqrt(Math.pow((f_bRV.getEntry(i) - yRV.getEntry(i)),2) + Math.pow(flux_uncertain[i],2));
 		
-		//sigma_i = sqrt( (Model - Data)^2 + sigma_individual^2)
-		//average = sum(sigma_i)
-		for(int i = 0; i < total; i++)
-			average += Math.sqrt(Math.pow((f_bRV.getEntry(i) - yRV.getEntry(i)),2) + Math.pow(flux_uncertain[i],2));
-		
-		//X^2 = average / (N^1.5)
-		average = average / (total * Math.sqrt(total));
-		
+			//X^2 = average / (N^1.5)
+			m_goodness = m_goodness / (total * Math.sqrt(total));
+		}
+			
 		//Error Eq3
 		double error3 = 0;
 		int N = sigma_y.getColumnDimension();		
@@ -644,13 +642,13 @@ public class SsapController {
 		error3 = Math.sqrt(error3) / Math.sqrt(N);
 		
 		//values = {a, b, c, goodness, sigma_a, sigma_b, sigma_alpha, error3}
-		double[] values = {solution.toArray()[0], solution.toArray()[1], solution.toArray()[2], Math.abs(average), sigma_p.getEntry(0, 0), sigma_p.getEntry(1, 1), sigma_p.getEntry(2, 2), error3};
+		double[] values = {solution.toArray()[0], solution.toArray()[1], solution.toArray()[2], m_goodness, sigma_p.getEntry(0, 0), sigma_p.getEntry(1, 1), sigma_p.getEntry(2, 2), error3};
 		
 		//Return delta vector + Error
 		return values;
 	}	
 		
-	public double[] levenbergMarquardt(double flux[], double flux_uncertain[], double f[], double t[], double f_0, double t_0, boolean weighted){
+	public double[] levenbergMarquardt(double flux[], double flux_uncertain[], double f[], double t[], double f_0, double t_0, boolean weighted, int model){
 		int N = 100;
 		
 		double beta[] = {0.1, 1, -0.7, 0, 0, 0, 0, 0};
@@ -660,19 +658,34 @@ public class SsapController {
 		t_0 = 60;
 		
 		if(weighted){
-			//Iteration Weighted LM: N times
-			for(int i = 0; i < N; i++){				
-				delta = WeightedlevenbergMarquardtIterator(beta, flux, flux_uncertain, f, t, lambda, f_0, t_0);
-				beta[0] += delta[0];
-				beta[1] += delta[1];
-				beta[2] += delta[2];
+			//Iteration Weighted LM: N times			
+			for(int i = 0; i < N; i++){
+				delta = WeightedlevenbergMarquardtIterator(beta, flux, flux_uncertain, f, t, lambda, f_0, t_0, model);
+				if(delta[0] != 100){
+					beta[0] += delta[0];
+					beta[1] += delta[1];
+					beta[2] += delta[2];
+					break;
+				}
 			}
 			
-			beta[3] = delta[3]; //Model Goodness
-			beta[4] = delta[4]; //Sigma A
-			beta[5] = delta[5]; //Sigma B
-			beta[6] = delta[6]; //sigma Alpha
-			beta[7] = delta[7]; //error3
+			if(delta[0] == 100){
+				beta[0] = 1000; 
+				beta[1] = 1000; 
+				beta[2] = 1000; 
+				beta[3] = 1000; //Model Goodness
+				beta[4] = 1000; //Sigma A
+				beta[5] = 1000; //Sigma B
+				beta[6] = 1000; //sigma Alpha
+				beta[7] = 1000; //error3
+			}
+			else{
+				beta[3] = delta[3]; //Model Goodness
+				beta[4] = delta[4]; //Sigma A
+				beta[5] = delta[5]; //Sigma B
+				beta[6] = delta[6]; //sigma Alpha
+				beta[7] = delta[7]; //error3
+			}
 		}
 		else{
 			//Iteration Non Weighted LM: N times
@@ -791,7 +804,7 @@ public class SsapController {
 					i--;
 			}
 			
-			double[] data = levenbergMarquardt(simulated_data, flux_uncertain, f, t, f_0, t_0, false);
+			double[] data = levenbergMarquardt(simulated_data, flux_uncertain, f, t, f_0, t_0, true, 0);
 			estimation_flux[j] = data[1];
 			average += estimation_flux[j];		
 		}
@@ -809,7 +822,7 @@ public class SsapController {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public String[] timeWindows4months(Vector tw4m, Date date_query, Double frequency, String name, boolean weighted){
+	public String[] timeWindows4months(Vector tw4m, Date date_query, Double frequency, String name, boolean weighted, int model){
 		final long MILISECS_PER_DAY = 24 * 60 * 60 * 1000;
 		
 		//Sorting measurements
@@ -869,7 +882,7 @@ public class SsapController {
 		double error_montecarlo = 100;
 		
 		//Iteration using 3 or more, to find the best estimation
-		for(int i = 3; i < tw4m_sorted.size(); i++){			
+		for(int i = 3; i <= tw4m_sorted.size(); i++){			
 			double flux_frame[] = new double[i];
 			double flux_uncertain_frame[] = new double[i];
 			double f_frame[] = new double[i];
@@ -893,8 +906,16 @@ public class SsapController {
 				t_frame[j] = t_frame[j] / (MILISECS_PER_DAY);
 			}
 			
+			double[] estimatedFlux = {0,0,0,0,0,0,0,0};
+			
 			System.out.println("\tUsing first " + i + " measurements");
-			double[] estimatedFlux = levenbergMarquardt(flux_frame, flux_uncertain_frame, f_frame, t_frame, frequency, date_query.getTime(), weighted);
+			try{
+				estimatedFlux = levenbergMarquardt(flux_frame, flux_uncertain_frame, f_frame, t_frame, frequency, date_query.getTime(), weighted, model);
+			}
+			catch(Exception e){
+				System.out.println("Problems at levenberg");
+				estimatedFlux = new double[]{100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0};
+			}
 			
 			double error_montecarlo_verbose = 100;
 			try{
@@ -908,16 +929,22 @@ public class SsapController {
 										
 			if(i > 3){
 				if(estimatedFlux[3] < bestEstimatedFlux[3]){
-					error_montecarlo = error_montecarlo_verbose;
-					
-					for(double f_error : flux_uncertain_frame){
-						error2 +=  f_error*f_error;
+					if(estimatedFlux[0] != 1000){										
+						error_montecarlo = error_montecarlo_verbose;
+						
+						for(double f_error : flux_uncertain_frame){
+							error2 +=  f_error*f_error;
+						}
+						error2 = error2/flux_uncertain_frame.length;
+						error2 = Math.sqrt(error2) / Math.sqrt(flux_uncertain_frame.length);
 					}
-					error2 = error2/flux_uncertain_frame.length;
-					error2 = Math.sqrt(error2) / Math.sqrt(flux_uncertain_frame.length);
-					
+					else{
+						error2 = 1000;
+						error_montecarlo = 1000;
+					}
+						
 					bestEstimatedFlux = estimatedFlux;
-					totalMs = i;												
+					totalMs = i;
 				}
 			}
 			else{
@@ -968,7 +995,7 @@ public class SsapController {
 	}
 
 	@SuppressWarnings("rawtypes")
-	public String[] bestFluxAlgorithm(String name, Double freq, String date) throws Exception{
+	public String[] bestFluxAlgorithm(String name, Double freq, String date, int model) throws Exception{
 		XmlRpcClient client;
 		Object searchMeasurement;
 		Vector smV = null;
@@ -1033,7 +1060,7 @@ public class SsapController {
           		       	        	
     	//Second Case: Window 4 months
     	if(tw4m.size() >= 3){
-    		String[] secondRow = timeWindows4months(tw4m, date_query, frequency, name, false);
+    		String[] secondRow = timeWindows4months(tw4m, date_query, frequency, name, false, model);
     		return secondRow;
     	}    	    	
         
@@ -1047,7 +1074,7 @@ public class SsapController {
 	}	
 		
 	@SuppressWarnings("rawtypes")
-	public String bestFluxAlgorithmAllMethods(String name, Double freq, String date){
+	public String bestFluxAlgorithmAllMethods(String name, Double freq, String date, int model){
 		XmlRpcClient client;
 		Object searchMeasurement;
 		Vector smV = null;
@@ -1134,7 +1161,7 @@ public class SsapController {
     		System.out.println("----------------------------------------------------------");
     		System.out.println("Time Windows 4 Months");
 	    	if(tw4m.size() >= 3){	    		
-	    		secondRow = timeWindows4months(tw4m, date_query, frequency, name, false);
+	    		secondRow = timeWindows4months(tw4m, date_query, frequency, name, false, model);
 	    	}
 	    	else{	    	
     			System.out.println("Not enough elements in time windows 4 months");
@@ -1165,7 +1192,7 @@ public class SsapController {
 	}
 	
 	@SuppressWarnings("rawtypes")
-	public String[] bestFluxAlgorithmOneOutput(String name, Double freq, String date, boolean test){
+	public String[] bestFluxAlgorithmOneOutput(String name, Double freq, String date, boolean test, int model){
 		XmlRpcClient client;
 		Object searchMeasurement;
 		Vector smV = null;
@@ -1201,6 +1228,7 @@ public class SsapController {
     	//Creation of time windows (tw) vector
     	Vector<Object> tw4m = new Vector<Object>();		
 		System.out.println("Filtering Measurements...");
+		System.out.println("Measurements in the same day");
 		
     	for(Object obj : smV){
 			Hashtable smOH = convertToHashtable(obj);
@@ -1213,20 +1241,18 @@ public class SsapController {
 			if(((Long)smOH.get("date.getTime") < upper_2months) && ((Long)smOH.get("date.getTime") > lower_2months)){
 				if(!test)
 					tw4m.addElement(obj);
-				else
+				else{					
 					if((Long)smOH.get("date.getTime") != date_query.getTime())
 						tw4m.addElement(obj);
-					else{
-						System.out.println("Measurements in the same day");
-						System.out.println("Frequency " + smOH.get("frequency"));
-						System.out.println("Flux " + smOH.get("flux"));
+					else{						
+						System.out.println("\tFrequency: " + smOH.get("frequency") + " Flux: " + smOH.get("flux"));						
 					}
+				}
 			}
     	}
 		    	
     	//String[] output = {"source", "frequency", "date", "flux_estimation", "flux_error", "alpha", "alpha error", "Error eq2", "Error eq3", "Error 4", "warning", "not_measurements", "verbose"};
-    	//String[] output = new String[13];//{"null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "empty"};
-    	String[] output = {"null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "empty"};
+    	String[] output = {"null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "empty"};    	
     	    	
     	//********************************************************************************************
     	//Warning construction
@@ -1276,7 +1302,7 @@ public class SsapController {
 			warning[2] = '0';
 			
 			System.out.println("Before and after NOT OK");			
-		}			
+		}
 		
     	//********************************************************************************************
     	//END Warning construction
@@ -1289,13 +1315,20 @@ public class SsapController {
 
     	try{
     		System.out.println("----------------------------------------------------------");    	
-    		    		
+
+    		
+    		
 	    	if(tw4m.size() >= 3){
 	    		output[11] = "1";
 	    		System.out.println("Using timeWindows4months, Exactly: " + tw4m.size() + " measurements");	    		
 	    		
 	    		//Weighted fit
-	    		output = timeWindows4months(tw4m, date_query, frequency, name, true);	 	    			    	
+	    		try{
+	    			output = timeWindows4months(tw4m, date_query, frequency, name, true, model);
+	    		}
+	    		catch(Exception e){
+	    			System.out.println("Problem using 4 months fit");
+	    		}
 	    	}
 	    	else if (tw4m.size() == 2){	    		
 	    		output[11] = "1";
@@ -1311,19 +1344,38 @@ public class SsapController {
 				double flux1 = (Double)ms1.get("flux");
 				double flux2 = (Double)ms2.get("flux");
 				
-				double flux2ms =  flux1 * Math.pow((frequency/freq2), (Math.log10(flux2/flux1)/Math.log10(freq2/freq1)));
+				double flux2ms =  flux1 * Math.pow((frequency/freq2), (Math.log10(flux2/flux1)/Math.log10(freq2/freq1)));							
 				
-				System.out.println("Flux estimated with 2 measurements" + flux2ms);
+				output[0] = name;
+				output[1] = String.valueOf(freq);
+				output[2] = date;
 				output[3] = String.valueOf(flux2ms);
+				output[4] = "1000";
+				output[5] = "1000";
+				output[6] = "1000";
+				output[7] = "1000";
+				output[8] = "1000";
+				output[9] = "1000";
 	    	}
 	    	else if (tw4m.size() == 1){
-	    		output[11] = "1";
+	    		//Test case DATE=27-July-2013&FREQUENCY=99204130126.1&NAME=3c454.3
 	    		
 	    		System.out.println("Only 1 measurements");
 	    		
 				Hashtable measurement = convertToHashtable(tw4m.get(0));											
 				double estimatedFlux = (Double)measurement.get("flux") * Math.pow(((Double)measurement.get("frequency")/frequency),-0.7);
+				output[0] = name;
+				output[1] = String.valueOf(freq);
+				output[2] = date;
 				output[3] = String.valueOf(estimatedFlux);
+				output[4] = String.valueOf(measurement.get("flux_uncertainty"));
+				output[5] = String.valueOf(0.7);
+				output[6] = "1000";
+				output[7] = "1000";
+				output[8] = "1000";
+				output[9] = "1000";
+				output[11] = "1";
+				
 	    	}
 	    	else{	    	    	
 	    		output[11] = "0";
@@ -1350,12 +1402,13 @@ public class SsapController {
     public @ResponseBody byte[] Ssap(ModelMap map, HttpServletResponse response,
             @RequestParam(value="NAME", required=true, defaultValue="default") String sourceName,
             @RequestParam(value="FREQUENCY", required=true, defaultValue="0.0") Double[] frequency,
-            @RequestParam(value="DATE", required=true, defaultValue="14-Jul-2013") String date,
+            @RequestParam(value="DATE", required=true, defaultValue="default") String date,
             @RequestParam(value="TEST", required=false, defaultValue="false") boolean test,
-            @RequestParam(value="VERBOSE", required=false, defaultValue="false") boolean verbose){
+            @RequestParam(value="VERBOSE", required=false, defaultValue="false") boolean verbose,
+            @RequestParam(value="MODEL", required=false, defaultValue="0") int model){
     	
     	//Read VOTable and save into xmlBytes
-    	byte[] xmlBytes = null;
+    	byte[] xmlBytes = null; 
     	try{
     		try{
     			String[] str = sourceName.split("\\s");
@@ -1363,7 +1416,8 @@ public class SsapController {
     			for(int i = 1; i < str.length; i++)
     				sourceName = sourceName + "+" + str[i];
 	    	}catch (Exception e){
-	    		System.out.println("No especial character");
+	    		//System.out.println("No especial character");
+	    		e.printStackTrace();
 	    	}    	
     		
     		String votable = "/tmp/votable.xml";
@@ -1378,7 +1432,7 @@ public class SsapController {
 	        	    PrintStream old = System.out;        	           	  
 	        	    System.setOut(ps);
 	        	    
-	    			String[] row = bestFluxAlgorithmOneOutput(sourceName, frequency[i], date, test);
+	    			String[] row = bestFluxAlgorithmOneOutput(sourceName, frequency[i], date, test, model);
 	    			allRows.add(row);
 	    			        	    
 	        	    //Reset
@@ -1392,7 +1446,7 @@ public class SsapController {
 	    	}
     		else{
     			for(int i = 0; i < frequency.length; i++){
-	    			String[] row = bestFluxAlgorithmOneOutput(sourceName, frequency[i], date, test);
+	    			String[] row = bestFluxAlgorithmOneOutput(sourceName, frequency[i], date, test, model);
 	    			allRows.add(row);
 	    		}
     		}
