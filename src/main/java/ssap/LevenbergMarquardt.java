@@ -73,11 +73,7 @@ public class LevenbergMarquardt {
 		
 		double[][] jacobian = Jacobian.evaluateJacobian(beta, f, t, f_0, t_0);				
 			
-		RealMatrix jacobianAsRM = MatrixUtils.createRealMatrix(jacobian);
-		
-		//System.out.print(jacobianAsRM.getEntry(0, 0) + " "); System.out.print(jacobianAsRM.getEntry(0, 1) + " "); System.out.println(jacobianAsRM.getEntry(0, 2));		
-		//System.out.print(jacobianAsRM.getEntry(1, 0) + " "); System.out.print(jacobianAsRM.getEntry(1, 1) + " "); System.out.println(jacobianAsRM.getEntry(1, 2));
-		//System.out.print(jacobianAsRM.getEntry(2, 0) + " "); System.out.print(jacobianAsRM.getEntry(2, 1) + " "); System.out.println(jacobianAsRM.getEntry(2, 2));		
+		RealMatrix jacobianAsRM = MatrixUtils.createRealMatrix(jacobian);		
 		
 		RealMatrix jacobianAsRM_t = jacobianAsRM.transpose();
 		RealMatrix jt_w_j = jacobianAsRM_t.multiply(Wrm.multiply(jacobianAsRM));		
@@ -96,14 +92,7 @@ public class LevenbergMarquardt {
 					e.printStackTrace();
 				}
 			}
-		}
-		
-		/*
-		System.out.print(diagjt_w_j.getEntry(0, 0) + " "); System.out.print(diagjt_w_j.getEntry(0, 1) + " "); System.out.println(diagjt_w_j.getEntry(0, 2));		
-		System.out.print(diagjt_w_j.getEntry(1, 0) + " "); System.out.print(diagjt_w_j.getEntry(1, 1) + " "); System.out.println(diagjt_w_j.getEntry(1, 2));
-		System.out.print(diagjt_w_j.getEntry(2, 0) + " "); System.out.print(diagjt_w_j.getEntry(2, 1) + " "); System.out.println(diagjt_w_j.getEntry(2, 2));
-		*/
-		
+		}		
 		
 		RealMatrix inverse_diag = MatrixUtils.createRealMatrix(jt_w_j.getRowDimension(), jt_w_j.getColumnDimension());
 		RealMatrix sigma_p = MatrixUtils.createRealMatrix(jt_w_j.getRowDimension(), jt_w_j.getColumnDimension());

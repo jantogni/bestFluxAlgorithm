@@ -7,16 +7,15 @@ import java.util.Locale;
 import java.util.Vector;
 
 public class Algorithms {
-	public Algorithms(){
-	
+	public Algorithms(){	
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static String[] bestFluxAlgorithm(String name, Double freq, String date, boolean test, int model){
 		DataReader data = new DataReader(name, freq, date, test);
-		try{
-			System.out.println("Reading data");
+		try{			
 			data.queryData();
+			System.out.println("Reading data: OK");
 		}
 		catch(Exception e){
 			System.out.println("Communication with asa.cl/sourcat/xmlrpc failed");
@@ -27,9 +26,8 @@ public class Algorithms {
 		Vector<Object> tw10d = data.get1weekData();
 		
 		System.out.println("----------------------------------------------------------");
-		System.out.println("Source: " + name);
-		System.out.println("Frequency: " + freq.toString());
-		System.out.println("----------------------------------------------------------");
+		
+		System.out.println("Warning section");
 		
 		Date date_query = null;
 		
@@ -45,21 +43,14 @@ public class Algorithms {
 		Double frequency = freq;
 		    	
     	//String[] output = {"source", "frequency", "date", "flux_estimation", "flux_error", "alpha", "alpha error", "Error eq2", "Error eq3", "Error 4", "warning", "not_measurements", "verbose"};
-    	String[] output = {"null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "empty"};    	
-    	    	
-    	//********************************************************************************************
-    	//Warning construction
-    	//********************************************************************************************
+    	String[] output = {"null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "empty"};
     	
     	char[] warning = {'4','4','4'};
-    	Warning wrng = new Warning(tw4m, tw10d, freq, date);
-    	warning = wrng.getWarning();
-		
-    	//********************************************************************************************
-    	//END Warning construction
-    	//********************************************************************************************
+    	warning = Warning.getWarning(tw4m, tw10d, freq, date);
+    	
+    	int minSet = Warning.minSet(tw4m, date, frequency);    	
+    	System.out.println("# of measurement should be used: " + (minSet+1));
     					
-
 		//********************************************************************************************
     	//Estimation using all alternatives
     	//********************************************************************************************
@@ -69,7 +60,7 @@ public class Algorithms {
     		    		
 	    	if(tw4m.size() >= 3){
 	    		output[11] = "1";
-	    		System.out.println("Using timeWindows4months, Exactly: " + tw4m.size() + " measurements");	    		
+	    		System.out.println("Using 4 month to approximate, Exactly: " + tw4m.size() + " measurements");	    		
 	    		
 	    		//Weighted fit
 	    		try{
@@ -99,16 +90,15 @@ public class Algorithms {
 				output[1] = String.valueOf(freq);
 				output[2] = date;
 				output[3] = String.valueOf(flux2ms);
-				output[4] = "1000";
-				output[5] = "1000";
-				output[6] = "1000";
-				output[7] = "1000";
-				output[8] = "1000";
-				output[9] = "1000";
+				output[4] = "-1000";
+				output[5] = "-1000";
+				output[6] = "-1000";
+				output[7] = "-1000";
+				output[8] = "-1000";
+				output[9] = "-1000";
 	    	}
 	    	else if (tw4m.size() == 1){
-	    		//Test case DATE=27-July-2013&FREQUENCY=99204130126.1&NAME=3c454.3
-	    		
+	    		//Test case DATE=27-July-2013&FREQUENCY=99204130126.1&NAME=3c454.3	    		
 	    		System.out.println("Only 1 measurements");
 	    		
 				Hashtable measurement = general.convertToHashtable(tw4m.get(0));											
@@ -119,12 +109,11 @@ public class Algorithms {
 				output[3] = String.valueOf(estimatedFlux);
 				output[4] = String.valueOf(measurement.get("flux_uncertainty"));
 				output[5] = String.valueOf(0.7);
-				output[6] = "1000";
-				output[7] = "1000";
-				output[8] = "1000";
-				output[9] = "1000";
-				output[11] = "1";
-				
+				output[6] = "-1000";
+				output[7] = "-1000";
+				output[8] = "-1000";
+				output[9] = "-1000";
+				output[11] = "1";				
 	    	}
 	    	else{	    	    	
 	    		output[11] = "0";
@@ -138,6 +127,7 @@ public class Algorithms {
     	}
     	
     	output[10] = String.valueOf(warning);
+    	
     	//********************************************************************************************
     	//END Estimation using all alternatives
     	//********************************************************************************************    	

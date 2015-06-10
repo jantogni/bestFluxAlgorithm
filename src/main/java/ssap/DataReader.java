@@ -52,9 +52,7 @@ public class DataReader {
 	
 	@SuppressWarnings({ "rawtypes" })
 	public Vector get4monthsData(){
-		Vector<Object> tw4m = new Vector<Object>();		
-		System.out.println("Filtering Measurements...");
-		System.out.println("Measurements in the same day");
+		Vector<Object> tw4m = new Vector<Object>();
 		
     	for(Object obj : this.dataVector){
 			Hashtable smOH = general.convertToHashtable(obj);
@@ -77,9 +75,7 @@ public class DataReader {
 	
 	@SuppressWarnings({ "rawtypes" })
 	public Vector get1weekData(){
-		Vector<Object> tw10d = new Vector<Object>();		
-		System.out.println("Filtering Measurements...");
-		System.out.println("Measurements in the same day");
+		Vector<Object> tw10d = new Vector<Object>();
 		
     	for(Object obj : this.dataVector){
 			Hashtable smOH = general.convertToHashtable(obj);
@@ -168,7 +164,7 @@ public class DataReader {
     		e.printStackTrace();
     		return null;
     	}    	    	        
-	}	
+	}		
 
 	//Setters / Getters
 	public Double getFreq() {

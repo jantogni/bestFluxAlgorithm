@@ -54,6 +54,7 @@ public class TimeWindow {
 		
 		System.out.println("----------------------------------------------------------");
 		System.out.println("Parameters");
+		System.out.println("Source name: " + name);		
 		System.out.println("Frequency: " + frequency + " Date: " + date_query);
     	System.out.println("# of elements in 4 months: " + tw4m_sorted.size());
     	System.out.println("List of measurement (sorted)\n");
@@ -63,7 +64,7 @@ public class TimeWindow {
     		Date d = new Date((Long)element.get("date.getTime"));
     		DateFormat df = new SimpleDateFormat("dd MMM yyyy");    		
     		System.out.println("\tFrequency: " + element.get("frequency") + "\tDate: "+ df.format(d) + "\tFlux: " + element.get("flux").toString() );
-    	}
+    	}    
     	System.out.println("");
 		
 		//Adjustable time frame: Best model goodness
@@ -73,7 +74,7 @@ public class TimeWindow {
 		double error_montecarlo = 100;
 		
 		//Iteration using 3 or more, to find the best estimation
-		for(int i = 3; i <= tw4m_sorted.size(); i++){			
+		for(int i = 7; i <= tw4m_sorted.size(); i++){			
 			double flux_frame[] = new double[i];
 			double flux_uncertain_frame[] = new double[i];
 			double f_frame[] = new double[i];
@@ -87,8 +88,8 @@ public class TimeWindow {
 				flux_frame[j] = (Double)twEl.get("flux");
 				flux_uncertain_frame[j] = Double.parseDouble((String) twEl.get("flux_uncertainty"));			
 				f_frame[j] = (Double)twEl.get("frequency");
-				t_frame[j] = (Long)twEl.get("date.getTime");							
-			}
+				t_frame[j] = (Long)twEl.get("date.getTime");				
+			}						
 			
 			//Correction of t
 			double t_0 = date_query.getTime();
@@ -99,7 +100,7 @@ public class TimeWindow {
 			
 			double[] estimatedFlux = {0,0,0,0,0,0,0,0};
 			
-			System.out.println("\tUsing first " + i + " measurements");
+			System.out.println("\tUsing first " + (i+1) + " measurements");
 			try{
 				estimatedFlux = LevenbergMarquardt.levenbergMarquardt(flux_frame, flux_uncertain_frame, f_frame, t_frame, frequency, date_query.getTime(), weighted, model);
 			}
@@ -118,7 +119,7 @@ public class TimeWindow {
 				error_montecarlo_verbose = 100;
 			}
 										
-			if(i > 3){
+			if(i > 7){
 				if(estimatedFlux[3] < bestEstimatedFlux[3]){
 					if(estimatedFlux[0] != -1000){										
 						error_montecarlo = error_montecarlo_verbose;
@@ -166,7 +167,7 @@ public class TimeWindow {
 			System.out.println("");			
 		}
 		
-		System.out.println("Best goodness at: " + totalMs);		
+		System.out.println("Best goodness at: " + (totalMs+1));		
 		
 		double[] estimatedFlux = bestEstimatedFlux;
 		

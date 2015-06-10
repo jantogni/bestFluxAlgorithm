@@ -31,33 +31,33 @@ public class general {
 		}
 	}
 	
-	public static boolean isBetween(Double x, int lower, int upper) {
-		  return lower <= x && x <= upper;
+	public static boolean isBetween(Double x, double d, double e) {
+		  return d <= x && x <= e;
 	}
 	
-	public static int almaBand(Double freq){
-		if(isBetween(freq, 84, 116))
+	public static int almaBand(double freq){
+		if(isBetween(freq, 84E09, 116E09))
 			return 3;
 		else
-			if(isBetween(freq, 125, 163))
+			if(isBetween(freq, 125E09, 163E09))
 				return 4;
 			else
-				if(isBetween(freq, 163, 211))
+				if(isBetween(freq, 163E09, 211E09))
 					return 5;
 				else
-					if(isBetween(freq, 211, 275))
+					if(isBetween(freq, 211E09, 275E09))
 						return 6;
 					else
-						if(isBetween(freq, 275, 373))
+						if(isBetween(freq, 275E09, 373E09))
 							return 7;
 						else
-							if(isBetween(freq, 385, 500))
+							if(isBetween(freq, 385E09, 500E09))
 								return 8;
 							else
-								if(isBetween(freq, 602, 720))
+								if(isBetween(freq, 602E09, 720E09))
 									return 9;
 								else
-									if(isBetween(freq, 787, 950))
+									if(isBetween(freq, 787E09, 950E09))
 										return 10;
 		return 0;
 	}
