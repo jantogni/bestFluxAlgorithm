@@ -80,7 +80,7 @@ public class TimeWindow {
 		//Result == 0 startPoint is the January Version
 		//January version: iteration use 8 or more measurement
 		if(result == 0){
-			if(tw4m_sorted.size() >= 7){
+			if(tw4m_sorted.size() > 7){
 				startPoint = 7;
 			}
 			else if(tw4m_sorted.size() >= 3){
@@ -90,9 +90,9 @@ public class TimeWindow {
 		else if((result == 1) || (result == 2)){
 			//Result == 1 startPoint is the March Version using model goodness
 			//Result == 2 startPoint is the March Version but use error2 instead of model goodness
-			if(tw4m_sorted.size() >= 3)
+			if(tw4m_sorted.size() > 3)
 				startPoint = 3;
-		}
+		}				
 		
 		for(int i = startPoint; i < tw4m_sorted.size(); i++){
 			double flux_frame[] = new double[i];
@@ -140,7 +140,7 @@ public class TimeWindow {
 			}
 			
 			//Best answer selection			
-			if(i > startPoint){				
+			if((i > startPoint) || (startPoint == tw4m_sorted.size())){				
 				if((result == 0) || (result == 1)){
 					//For first 2 cases, return the best model goodness
 					if(estimatedFlux[3] < bestEstimatedFlux[3]){
@@ -218,7 +218,7 @@ public class TimeWindow {
 			System.out.println("");			
 		}
 		
-		System.out.println("Best goodness at: " + (totalMs+1));		
+		System.out.println("Best goodness at: " + (totalMs+1));
 		
 		double[] estimatedFlux = bestEstimatedFlux;
 		

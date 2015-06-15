@@ -27,10 +27,14 @@ public class Warning {
     	}
 		
 		//Str[0]: amount of measurements
-		if(tw4m.size() >= 3) warning[0] = '3';
-    	if(tw4m.size() == 2) warning[0] = '2';
-    	if(tw4m.size() == 1) warning[0] = '1';
-    	if(tw4m.size() == 0) warning[0] = '0';
+		if(tw4m.size() >= 7) 
+			warning[0] = '3';
+		else if(tw4m.size() >= 2) 
+			warning[0] = '2';
+		else if(tw4m.size() == 1) 
+			warning[0] = '1';
+		else if(tw4m.size() == 0) 
+			warning[0] = '0';
     	    	
     	//Str[1]: at least 1 element within 10 days in the same band
     	warning[1] = '0';    
