@@ -35,7 +35,8 @@ public class SsapController {
             @RequestParam(value="DATE", required=true, defaultValue="default") String date,
             @RequestParam(value="TEST", required=false, defaultValue="false") boolean test,
             @RequestParam(value="VERBOSE", required=false, defaultValue="false") boolean verbose,
-            @RequestParam(value="MODEL", required=false, defaultValue="0") int model){
+            @RequestParam(value="MODEL", required=false, defaultValue="0") int model,
+            @RequestParam(value="RESULT", required=false, defaultValue="0") int result){
     	
     	//Read VOTable and save into xmlBytes
     	byte[] xmlBytes = null; 
@@ -46,7 +47,6 @@ public class SsapController {
     			for(int i = 1; i < str.length; i++)
     				sourceName = sourceName + "+" + str[i];
 	    	}catch (Exception e){
-	    		//System.out.println("No especial character");
 	    		e.printStackTrace();
 	    	}    	
     		
@@ -62,7 +62,7 @@ public class SsapController {
 	        	    PrintStream old = System.out;        	           	  
 	        	    System.setOut(ps);
 	        	    
-	    			String[] row = Algorithms.bestFluxAlgorithm(sourceName, frequency[i], date, test, model);
+	    			String[] row = Algorithms.bestFluxAlgorithm(sourceName, frequency[i], date, test, model, result);
 	    			allRows.add(row);
 	    			        	    
 	        	    //Reset
@@ -76,7 +76,7 @@ public class SsapController {
 	    	}
     		else{
     			for(int i = 0; i < frequency.length; i++){
-	    			String[] row = Algorithms.bestFluxAlgorithm(sourceName, frequency[i], date, test, model);
+	    			String[] row = Algorithms.bestFluxAlgorithm(sourceName, frequency[i], date, test, model, result);
 	    			allRows.add(row);
 	    		}
     		}

@@ -13,7 +13,7 @@ public class TimeWindow {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static String[] timeWindows4months(Vector tw4m, Date date_query, Double frequency, String name, boolean weighted, int model){
+	public static String[] timeWindows4months(Vector tw4m, Date date_query, Double frequency, String name, boolean weighted, int model, int result){
 		final long MILISECS_PER_DAY = 24 * 60 * 60 * 1000;
 		
 		//Sorting measurements
@@ -29,6 +29,7 @@ public class TimeWindow {
 			index[i] = i;
 		}
 		
+		//Sorting differences
 		for(int i = 0; i < tw4m.size()-1; i++){
 			for(int j = 0; j < tw4m.size()-1; j++){
 				if(diff[j] > diff[j+1]){
@@ -50,8 +51,8 @@ public class TimeWindow {
 			Hashtable element = (Hashtable)tw4m.get(index[i]);
 			tw4m_sorted.set(i, element);
 		}
-		//End sorting measurements
 		
+		//Print parameters information
 		System.out.println("----------------------------------------------------------");
 		System.out.println("Parameters");
 		System.out.println("Source name: " + name);		
@@ -68,20 +69,29 @@ public class TimeWindow {
     	System.out.println("");
 		
 		//Adjustable time frame: Best model goodness
-		double[] bestEstimatedFlux = new double[7];
+		//double[] bestEstimatedFlux = new double[7];
+    	double[] bestEstimatedFlux = {-1000, -1000, -1000, 1000, -1000, -1000, -1000};
 		int totalMs = 0;
 		double error2 = 0;
 		double error_montecarlo = 100;
-		
-		//January version: iteration use 8 or more measurement
-		//In case of fewer, return the best model goodness starting with 4 measurement		
+			
 		int startPoint = 0;
 		
-		if(tw4m_sorted.size() >= 7){
-			startPoint = 7;
+		//Result == 0 startPoint is the January Version
+		//January version: iteration use 8 or more measurement
+		if(result == 0){
+			if(tw4m_sorted.size() >= 7){
+				startPoint = 7;
+			}
+			else if(tw4m_sorted.size() >= 3){
+				startPoint = 3;
+			}
 		}
-		else if(tw4m_sorted.size() >= 3){
-			startPoint = 3;
+		else if((result == 1) || (result == 2)){
+			//Result == 1 startPoint is the March Version using model goodness
+			//Result == 2 startPoint is the March Version but use error2 instead of model goodness
+			if(tw4m_sorted.size() >= 3)
+				startPoint = 3;
 		}
 		
 		for(int i = startPoint; i < tw4m_sorted.size(); i++){
@@ -107,7 +117,7 @@ public class TimeWindow {
 				t_frame[j] = t_frame[j] - (t_0 - 60*MILISECS_PER_DAY);
 				t_frame[j] = t_frame[j] / (MILISECS_PER_DAY);
 			}
-			
+						
 			double[] estimatedFlux = {0,0,0,0,0,0,0,0};
 			
 			System.out.println("\tUsing first " + (i+1) + " measurements");
@@ -118,8 +128,8 @@ public class TimeWindow {
 				System.out.println("Problems at levenberg");
 				estimatedFlux = new double[]{100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0};
 			}
-			
-			double error_montecarlo_verbose = 100;
+						
+			double error_montecarlo_verbose = 100;			
 			try{
 				error_montecarlo_verbose = monteCarloError(flux_frame, flux_uncertain_frame, f_frame, t_frame, frequency, date_query.getTime());
 			}
@@ -128,25 +138,50 @@ public class TimeWindow {
 				e.printStackTrace();
 				error_montecarlo_verbose = 100;
 			}
-										
-			if(i > startPoint){
-				if(estimatedFlux[3] < bestEstimatedFlux[3]){
-					if(estimatedFlux[0] != -1000){										
-						error_montecarlo = error_montecarlo_verbose;
-						
-						for(double f_error : flux_uncertain_frame){
-							error2 +=  f_error*f_error;
+			
+			//Best answer selection			
+			if(i > startPoint){				
+				if((result == 0) || (result == 1)){
+					//For first 2 cases, return the best model goodness
+					if(estimatedFlux[3] < bestEstimatedFlux[3]){
+						if(estimatedFlux[0] != -1000){										
+							error_montecarlo = error_montecarlo_verbose;
+							
+							for(double f_error : flux_uncertain_frame){
+								error2 +=  f_error*f_error;
+							}
+							error2 = error2/flux_uncertain_frame.length;
+							error2 = Math.sqrt(error2) / Math.sqrt(flux_uncertain_frame.length);
 						}
-						error2 = error2/flux_uncertain_frame.length;
-						error2 = Math.sqrt(error2) / Math.sqrt(flux_uncertain_frame.length);
+						else{
+							error2 = 1000;
+							error_montecarlo = 1000;
+						}
+							
+						bestEstimatedFlux = estimatedFlux;
+						totalMs = i;
 					}
-					else{
-						error2 = 1000;
-						error_montecarlo = 1000;
+				}				
+				else if((result == 2)){
+					//result == 2, return the best error2
+					if(estimatedFlux[5] < bestEstimatedFlux[5]){
+						if(estimatedFlux[0] != -1000){										
+							error_montecarlo = error_montecarlo_verbose;
+							
+							for(double f_error : flux_uncertain_frame){
+								error2 +=  f_error*f_error;
+							}
+							error2 = error2/flux_uncertain_frame.length;
+							error2 = Math.sqrt(error2) / Math.sqrt(flux_uncertain_frame.length);
+						}
+						else{
+							error2 = 1000;
+							error_montecarlo = 1000;
+						}
+							
+						bestEstimatedFlux = estimatedFlux;
+						totalMs = i;
 					}
-						
-					bestEstimatedFlux = estimatedFlux;
-					totalMs = i;
 				}
 			}
 			else{
