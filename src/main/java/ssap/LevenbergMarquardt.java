@@ -168,7 +168,7 @@ public class LevenbergMarquardt {
 			//X^2 = average / (N^1.5)
 			m_goodness = m_goodness / (total * Math.sqrt(total));
 		}
-			
+
 		//Error Eq3
 		double error3 = 0;
 		int N = sigma_y.getColumnDimension();		
@@ -209,11 +209,11 @@ public class LevenbergMarquardt {
 				beta[0] = -1000; 
 				beta[1] = -1000; 
 				beta[2] = -1000; 
-				beta[3] = -1000; //Model Goodness
+				beta[3] = 1000; //Model Goodness
 				beta[4] = -1000; //Sigma A
 				beta[5] = -1000; //Sigma B
 				beta[6] = -1000; //sigma Alpha
-				beta[7] = -1000; //error3
+				beta[7] = 1000; //error3
 			}
 			else{
 				beta[3] = delta[3]; //Model Goodness

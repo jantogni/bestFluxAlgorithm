@@ -73,8 +73,18 @@ public class TimeWindow {
 		double error2 = 0;
 		double error_montecarlo = 100;
 		
-		//Iteration using 3 or more, to find the best estimation
-		for(int i = 7; i <= tw4m_sorted.size(); i++){			
+		//January version: iteration use 8 or more measurement
+		//In case of fewer, return the best model goodness starting with 4 measurement		
+		int startPoint = 0;
+		
+		if(tw4m_sorted.size() >= 7){
+			startPoint = 7;
+		}
+		else if(tw4m_sorted.size() >= 3){
+			startPoint = 3;
+		}
+		
+		for(int i = startPoint; i < tw4m_sorted.size(); i++){
 			double flux_frame[] = new double[i];
 			double flux_uncertain_frame[] = new double[i];
 			double f_frame[] = new double[i];
@@ -119,7 +129,7 @@ public class TimeWindow {
 				error_montecarlo_verbose = 100;
 			}
 										
-			if(i > 7){
+			if(i > startPoint){
 				if(estimatedFlux[3] < bestEstimatedFlux[3]){
 					if(estimatedFlux[0] != -1000){										
 						error_montecarlo = error_montecarlo_verbose;
@@ -147,11 +157,17 @@ public class TimeWindow {
 			
 			double error2_verbose = 0;
 			
-			for(double f_error : flux_uncertain_frame){
-				error2_verbose +=  f_error*f_error;
+			if(estimatedFlux[0] != -1000){							
+				for(double f_error : flux_uncertain_frame){
+					error2_verbose +=  f_error*f_error;
+				}
+				error2_verbose = error2_verbose/flux_uncertain_frame.length;
+				error2_verbose = Math.sqrt(error2_verbose) / Math.sqrt(flux_uncertain_frame.length);
 			}
-			error2_verbose = error2_verbose/flux_uncertain_frame.length;
-			error2_verbose = Math.sqrt(error2_verbose) / Math.sqrt(flux_uncertain_frame.length);
+			else{
+				error2_verbose = 1000;
+				error_montecarlo_verbose = 1000;
+			}
 			
 			System.out.println("\tA: " + estimatedFlux[0]);
 			System.out.println("\tB: " + estimatedFlux[1]);
