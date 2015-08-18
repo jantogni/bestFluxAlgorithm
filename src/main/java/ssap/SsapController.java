@@ -36,7 +36,8 @@ public class SsapController {
             @RequestParam(value="TEST", required=false, defaultValue="false") boolean test,
             @RequestParam(value="VERBOSE", required=false, defaultValue="false") boolean verbose,
             @RequestParam(value="MODEL", required=false, defaultValue="0") int model,
-            @RequestParam(value="RESULT", required=false, defaultValue="0") int result){
+            @RequestParam(value="RESULT", required=false, defaultValue="0") int result,
+            @RequestParam(value="WEIGHTED", required=false, defaultValue="true") boolean weighted){
     	
     	//Read VOTable and save into xmlBytes
     	byte[] xmlBytes = null; 
@@ -62,7 +63,7 @@ public class SsapController {
 	        	    PrintStream old = System.out;        	           	  
 	        	    System.setOut(ps);
 	        	    
-	    			String[] row = Algorithms.bestFluxAlgorithm(sourceName, frequency[i], date, test, model, result);
+	    			String[] row = Algorithms.bestFluxAlgorithm(sourceName, frequency[i], date, test, model, result, weighted);
 	    			allRows.add(row);
 	    			        	    
 	        	    //Reset
@@ -76,7 +77,7 @@ public class SsapController {
 	    	}
     		else{
     			for(int i = 0; i < frequency.length; i++){
-	    			String[] row = Algorithms.bestFluxAlgorithm(sourceName, frequency[i], date, test, model, result);
+	    			String[] row = Algorithms.bestFluxAlgorithm(sourceName, frequency[i], date, test, model, result, weighted);
 	    			allRows.add(row);
 	    		}
     		}

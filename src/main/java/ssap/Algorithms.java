@@ -11,7 +11,7 @@ public class Algorithms {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static String[] bestFluxAlgorithm(String name, Double freq, String date, boolean test, int model, int result){
+	public static String[] bestFluxAlgorithm(String name, Double freq, String date, boolean test, int model, int result, boolean weighted){
 		DataReader data = new DataReader(name, freq, date, test);
 		try{			
 			data.queryData();
@@ -64,7 +64,7 @@ public class Algorithms {
 	    		
 	    		//Weighted fit
 	    		try{
-	    			output = TimeWindow.timeWindows4months(tw4m, date_query, frequency, name, true, model, result);
+	    			output = TimeWindow.timeWindows4months(tw4m, date_query, frequency, name, weighted, model, result);
 	    		}
 	    		catch(Exception e){
 	    			System.out.println("Problem using 4 months fit");

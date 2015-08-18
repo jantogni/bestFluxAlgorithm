@@ -59,12 +59,13 @@ public class TimeWindow {
 		System.out.println("Frequency: " + frequency + " Date: " + date_query);
     	System.out.println("# of elements in 4 months: " + tw4m_sorted.size());
     	System.out.println("List of measurement (sorted)\n");
+    	
     	for(int i = 0; i < tw4m_sorted.size(); i++){    		
     		Hashtable element = (Hashtable)tw4m_sorted.get(i);
     		System.out.print("\tMeasurment: " + (i+1));
     		Date d = new Date((Long)element.get("date.getTime"));
     		DateFormat df = new SimpleDateFormat("dd MMM yyyy");    		
-    		System.out.println("\tFrequency: " + element.get("frequency") + "\tDate: "+ df.format(d) + "\tFlux: " + element.get("flux").toString() );
+    		System.out.println("\tFrequency: " + element.get("frequency") + "\tDate: "+ df.format(d) + "\tFlux: " + element.get("flux").toString() + "\tFlux Uncertainty: " +  element.get("flux_uncertainty"));
     	}    
     	System.out.println("");
 		
@@ -91,7 +92,7 @@ public class TimeWindow {
 			//Result == 1 startPoint is the March Version using model goodness
 			//Result == 2 startPoint is the March Version but use error2 instead of model goodness
 			if(tw4m_sorted.size() > 3)
-				startPoint = 3;
+				startPoint = 4;
 		}				
 		
 		for(int i = startPoint; i < tw4m_sorted.size(); i++){
@@ -106,19 +107,20 @@ public class TimeWindow {
 			for(int j = 0; j < i; j++){
 				Hashtable twEl = (Hashtable)tw4m_sorted.get(j);
 				flux_frame[j] = (Double)twEl.get("flux");
-				flux_uncertain_frame[j] = Double.parseDouble((String) twEl.get("flux_uncertainty"));			
+				flux_uncertain_frame[j] = Double.parseDouble((String) twEl.get("flux_uncertainty"));				
 				f_frame[j] = (Double)twEl.get("frequency");
-				t_frame[j] = (Long)twEl.get("date.getTime");				
-			}						
+				t_frame[j] = (Long)twEl.get("date.getTime");
+			}
 			
 			//Correction of t
 			double t_0 = date_query.getTime();
 			for(int j = 0; j < t_frame.length; j++){
 				t_frame[j] = t_frame[j] - (t_0 - 60*MILISECS_PER_DAY);
 				t_frame[j] = t_frame[j] / (MILISECS_PER_DAY);
+				//System.out.println("T_FRAME[j] " + t_frame[j]);
 			}
 						
-			double[] estimatedFlux = {0,0,0,0,0,0,0,0};
+			double[] estimatedFlux = {0, 0, 0, 0, 0, 0, 0, 0};
 			
 			System.out.println("\tUsing first " + (i+1) + " measurements");
 			try{

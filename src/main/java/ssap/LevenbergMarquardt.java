@@ -45,14 +45,17 @@ public class LevenbergMarquardt {
 		RealVector constants = jacobianAsRM_t.operate(yRV.subtract(f_bRV));
 		RealVector solution = solver.solve(constants);
 		
-		//Adding Error
-		double average = 0;
-		int total = yRV.getDimension();
-		for(int i = 0; i < yRV.getDimension(); i++){
-			average += Math.abs(yRV.getEntry(i) - f_bRV.getEntry(i))/total;
-		}
+		int total = yRV.getDimension();		
+				
+		double m_goodness = 0;
 		
-		double[] values = {solution.toArray()[0], solution.toArray()[1], solution.toArray()[2], Math.abs(average)};
+	 	for(int i = 0; i < yRV.getDimension(); i++){
+	 		m_goodness += Math.abs(yRV.getEntry(i) - f_bRV.getEntry(i))/total;
+	 	}		
+	 	m_goodness = m_goodness / Math.sqrt(total);
+		
+		
+		double[] values = {solution.toArray()[0], solution.toArray()[1], solution.toArray()[2], Math.abs(m_goodness)};
 		
 		//Return delta vector + Error
 		return values;
@@ -65,8 +68,10 @@ public class LevenbergMarquardt {
 		RealMatrix Wrm = MatrixUtils.createRealMatrix(flux_uncertain.length, flux_uncertain.length);
 		for(int i = 0; i < flux_uncertain.length; i++)
 			for(int j = 0; j < flux_uncertain.length; j++){
-				if(i == j)
-					Wrm.setEntry(i, j, 1/(flux_uncertain[i] * flux_uncertain[i]));					
+				if(i == j){
+					double weight = 1/(flux_uncertain[i] * flux_uncertain[j]);
+					Wrm.setEntry(i, j, weight);
+				}
 				else
 					Wrm.setEntry(i, j, 0);
 			}		
@@ -193,9 +198,11 @@ public class LevenbergMarquardt {
 				
 		t_0 = 60;
 		
+		//weighted = false;
+		
 		if(weighted){
 			//Iteration Weighted LM: N times			
-			for(int i = 0; i < N; i++){
+			for(int i = 0; i < N; i++){				
 				delta = WeightedlevenbergMarquardtIterator(beta, flux, flux_uncertain, f, t, lambda, f_0, t_0, model);
 				if(delta[0] != 100){
 					beta[0] += delta[0];
@@ -230,7 +237,9 @@ public class LevenbergMarquardt {
 				beta[0] += delta[0];
 				beta[1] += delta[1];
 				beta[2] += delta[2];
+				beta[3] = delta[3];
 			}
+			
 		}				
 		
 		return beta;
